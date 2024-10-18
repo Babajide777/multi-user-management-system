@@ -1,8 +1,6 @@
 import jwt from "jsonwebtoken";
 import { NextFunction, Request, Response } from "express";
-import { fail } from "../utils/response";
 import { JWT_SECRET } from "../drizzle/env";
-import { isJSON } from "../utils/isJSON";
 import { UserRepository } from "../repository/userRepository";
 import { Container } from "typedi";
 
