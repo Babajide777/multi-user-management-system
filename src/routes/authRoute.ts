@@ -1,6 +1,9 @@
 import express, { Router, Request, Response, NextFunction } from "express";
 import Container from "typedi";
 import { AuthController } from "../controllers/authController";
+import { authorizeToken } from "../middlewares/authorizeToken";
+import { roleChecker } from "../middlewares/roleChecker";
+import { UserRoleEnum } from "../utils/enums";
 
 const router: Router = express.Router();
 
@@ -16,6 +19,8 @@ router.post("/login", (req: Request, res: Response, next: NextFunction) => {
 
 router.post(
   "/sign-up-admin",
+  authorizeToken,
+  roleChecker(UserRoleEnum.admin),
   (req: Request, res: Response, next: NextFunction) => {
     authController.signUpAdmin(req, res, next);
   }
