@@ -1,72 +1,51 @@
 import "reflect-metadata";
 import { Service } from "typedi";
-import {
-  validateCreateUser,
-  CreateUserDTO,
-  validateLoginUser,
-  LoginUserDTO,
-  RequestPasswordDTO,
-  validateRequestPasswordReset,
-  ResetPasswordDTO,
-  validateUserPasswordReset,
-} from "../dto/userDTO";
 import { UserRepository } from "../repository/userRepository";
-import { Response } from "express";
-import { checkJwt, createAccessToken, createRefreshToken } from "../utils/jwt";
-import { fail } from "../utils/response";
+import { createRefreshToken } from "../utils/jwt";
 import { hashPassword, validatePassword } from "../utils/passwordHash";
-import { decrypt, encrypt } from "../utils/encryptDecrypt";
-import { createMail } from "../utils/createMail";
+import {
+  CreateUserDTO,
+  LoginUserDTO,
+  validateCreateUser,
+  validateLoginUser,
+} from "../dtos/userDTO";
 
 @Service()
 export class AuthService {
-  constructor(private readonly _userRepository: UserRepository) {}
+  constructor(private readonly userRepository: UserRepository) {}
 
-  async signUpUser(data: CreateUserDTO, res: Response) {
+  async signUpUser(data: CreateUserDTO) {
     const check = validateCreateUser.safeParse(data);
     if (!check.success)
       throw new Error(JSON.stringify(check.error.flatten().fieldErrors));
 
-    const checkUser = await this._userRepository.getUserUsingEmail(data.email);
+    const checkUser = await this.userRepository.findUserByEmail(data.email);
     if (checkUser) throw new Error("User already exists");
 
     data.password = hashPassword(data.password);
 
-    const savedUser = await this._userRepository.saveUser(data);
-    if (!savedUser[0]) throw new Error(`${savedUser[1]}`);
+    const savedUser = await this.userRepository.saveUser(data);
 
-    let user: any = savedUser[1];
+    if (!savedUser.success || !savedUser.id)
+      throw new Error("Error creating user");
 
-    let accessToken = createAccessToken(user._id);
-    let refreshToken = createRefreshToken(user._id);
+    let token = createRefreshToken(savedUser.id);
+    let user = await this.userRepository.findUserByID(savedUser.id);
 
-    let editUser = await this._userRepository.editUserUsingId(user._id, {
-      refreshToken,
-    });
-
-    if (!editUser) throw new Error("Error updating refresh token");
-
-    res.cookie("jwt", refreshToken, {
-      httpOnly: true,
-      sameSite: "none",
-      maxAge: 60 * 60 * 24 * 30,
-      // secure: true,
-    });
+    if (!user) throw new Error("User not found");
 
     return {
-      user: editUser,
-      token: accessToken,
+      ...user,
+      token,
     };
   }
 
-  async loginUser(data: LoginUserDTO, res: Response) {
+  async loginUser(data: LoginUserDTO) {
     const check = validateLoginUser.safeParse(data);
     if (!check.success)
       throw new Error(JSON.stringify(check.error.flatten().fieldErrors));
 
-    const checkUser: any = await this._userRepository.getUserUsingEmail(
-      data.email
-    );
+    const checkUser = await this.userRepository.findUserByEmail(data.email);
     if (!checkUser) throw new Error("Wrong Email or password");
 
     let passwordCheck = await validatePassword(
@@ -76,25 +55,11 @@ export class AuthService {
 
     if (!passwordCheck) throw new Error("Wrong Email or password");
 
-    let accessToken = createAccessToken(checkUser._id);
-    let refreshToken = createRefreshToken(checkUser._id);
-
-    let editUser = await this._userRepository.editUserUsingId(checkUser._id, {
-      refreshToken,
-    });
-
-    if (!editUser) throw new Error("Error updating refresh token");
-
-    res.cookie("jwt", refreshToken, {
-      // domain: "http://127.0.0.1:5173",
-      httpOnly: true,
-      sameSite: "none",
-      maxAge: 60 * 60 * 24 * 30,
-    });
+    let token = createRefreshToken(checkUser.id);
 
     return {
-      user: editUser,
-      token: accessToken,
+      user: checkUser,
+      token,
     };
   }
 }
