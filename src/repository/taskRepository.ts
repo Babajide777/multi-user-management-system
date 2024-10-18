@@ -3,6 +3,8 @@ import { db } from "../drizzle/db";
 import { tasks } from "../drizzle/Index";
 import { SaveDataType } from "./types/save-data.types";
 import { SaveTaskType } from "./types/save-task.type";
+import { eq } from "drizzle-orm";
+import { Task } from "../dtos/taskDTO";
 
 @Service()
 export class TaskRepository {
@@ -20,5 +22,17 @@ export class TaskRepository {
       where: (tasks, { eq, and, isNull }) =>
         and(eq(tasks.id, id), isNull(tasks.deletedAt)),
     });
+  }
+
+  async editTaskByID(id: number, item: Partial<Task>): Promise<boolean> {
+    const updateData: any = { ...item };
+    updateData.updatedAt = new Date(Date.now());
+
+    let editedTask = await this.db
+      .update(tasks)
+      .set(updateData)
+      .where(eq(tasks.id, id));
+
+    return editedTask[0].affectedRows === 0 ? false : true;
   }
 }

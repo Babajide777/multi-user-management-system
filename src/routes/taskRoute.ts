@@ -18,4 +18,13 @@ router.post(
   }
 );
 
+router.patch(
+  "/:taskId/update-status",
+  authorizeToken,
+  roleChecker(UserRoleEnum.user),
+  (req: Request, res: Response, next: NextFunction) => {
+    taskController.updateTaskStatus(req, res, next);
+  }
+);
+
 export default router;

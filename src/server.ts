@@ -28,7 +28,9 @@ app.use("/api/tasks", taskRoute);
 
 app.all("*", (req: Request, res: Response, next) => {
   res.status(404).json({
-    msg: "Page not found",
+    success: false,
+    message: "Page not found",
+    payload: [],
   });
 });
 
