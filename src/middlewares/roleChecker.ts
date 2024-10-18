@@ -1,6 +1,4 @@
 import { NextFunction, Response } from "express";
-import { fail } from "../utils/response";
-import { isJSON } from "../utils/isJSON";
 import { UserRoleEnum } from "../utils/enums";
 
 export const roleChecker = (role: UserRoleEnum) => {
@@ -25,8 +23,12 @@ export const roleChecker = (role: UserRoleEnum) => {
       next();
     } catch (error: any) {
       const statusCode = error.statusCode || 500;
-      const message = isJSON(error.message) || "Internal Server Error";
-      res.status(statusCode).json(fail(res, statusCode, message));
+      const message = error.message || "Internal Server Error";
+      res.status(statusCode).json({
+        success: false,
+        message: message,
+        payload: [],
+      });
     }
   };
 };

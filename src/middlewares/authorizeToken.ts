@@ -50,7 +50,11 @@ export const authorizeToken = async (
     next();
   } catch (error: any) {
     const statusCode = error.statusCode || 500;
-    const message = isJSON(error.message) || "Internal Server Error";
-    res.status(statusCode).json(fail(res, statusCode, message));
+    const message = error.message || "Internal Server Error";
+    res.status(statusCode).json({
+      success: false,
+      message: message,
+      payload: [],
+    });
   }
 };

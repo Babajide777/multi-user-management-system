@@ -1,7 +1,6 @@
 import { Service } from "typedi";
 import { AuthService } from "../services/authService";
 import { Request, Response, NextFunction } from "express";
-import { isJSON } from "../utils/isJSON";
 import { fail, success } from "../utils/response";
 import { CreateUserDTO, LoginUserDTO } from "../dtos/userDTO";
 
@@ -16,7 +15,7 @@ export class AuthController {
       return success(res, 201, createdUser, "User created successfully");
     } catch (error: any) {
       const statusCode = error.statusCode || 500;
-      const message = isJSON(error.message) || "Internal Server Error";
+      const message = error.message || "Internal Server Error";
       return fail(res, statusCode, message);
     }
   }
@@ -28,7 +27,7 @@ export class AuthController {
       return success(res, 200, user, "User login success");
     } catch (error: any) {
       const statusCode = error.statusCode || 500;
-      const message = isJSON(error.message) || "Internal Server Error";
+      const message = error.message || "Internal Server Error";
       return fail(res, statusCode, message);
     }
   }
@@ -40,7 +39,7 @@ export class AuthController {
       return success(res, 201, createdAdmin, "Admin created successfully");
     } catch (error: any) {
       const statusCode = error.statusCode || 500;
-      const message = isJSON(error.message) || "Internal Server Error";
+      const message = error.message || "Internal Server Error";
       return fail(res, statusCode, message);
     }
   }
