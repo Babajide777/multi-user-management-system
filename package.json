@@ -1,5 +1,5 @@
 {
-  "name": "multi-user-manangement-system",
+  "name": "multi-user-management-system",
   "version": "1.0.0",
   "description": "A multi user management system ",
   "main": "src/server.js",

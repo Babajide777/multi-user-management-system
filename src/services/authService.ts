@@ -9,6 +9,7 @@ import {
   validateCreateUser,
   validateLoginUser,
 } from "../dtos/userDTO";
+import { zodErrorObjectToStringConverter } from "../utils/zodErrorObjectToStringConvert";
 
 @Service()
 export class AuthService {
@@ -16,46 +17,80 @@ export class AuthService {
 
   async signUpUser(data: CreateUserDTO) {
     const check = validateCreateUser.safeParse(data);
-    if (!check.success)
-      throw new Error(JSON.stringify(check.error.flatten().fieldErrors));
+    if (!check.success) {
+      throw {
+        message: zodErrorObjectToStringConverter(
+          check.error.flatten().fieldErrors
+        ),
+        statusCode: 400,
+      };
+    }
 
     const checkUser = await this.userRepository.findUserByEmail(data.email);
-    if (checkUser) throw new Error("User already exists");
+    if (checkUser) {
+      throw {
+        message: "User already exists",
+        statusCode: 409,
+      };
+    }
 
     data.password = hashPassword(data.password);
 
     const savedUser = await this.userRepository.saveUser(data);
+    if (!savedUser.success || !savedUser.id) {
+      throw {
+        message: "Error creating user",
+        statusCode: 500,
+      };
+    }
 
-    if (!savedUser.success || !savedUser.id)
-      throw new Error("Error creating user");
+    const token = createRefreshToken(savedUser.id);
 
-    let token = createRefreshToken(savedUser.id);
-    let user = await this.userRepository.findUserByID(savedUser.id);
-
-    if (!user) throw new Error("User not found");
+    const user = await this.userRepository.findUserByID(savedUser.id);
+    if (!user) {
+      throw {
+        message: "User not found",
+        statusCode: 500,
+      };
+    }
 
     return {
-      ...user,
+      user,
       token,
     };
   }
 
   async loginUser(data: LoginUserDTO) {
     const check = validateLoginUser.safeParse(data);
-    if (!check.success)
-      throw new Error(JSON.stringify(check.error.flatten().fieldErrors));
+    if (!check.success) {
+      throw {
+        message: zodErrorObjectToStringConverter(
+          check.error.flatten().fieldErrors
+        ),
+        statusCode: 400,
+      };
+    }
 
     const checkUser = await this.userRepository.findUserByEmail(data.email);
-    if (!checkUser) throw new Error("Wrong Email or password");
+    if (!checkUser) {
+      throw {
+        message: "Wrong Email or password",
+        statusCode: 401,
+      };
+    }
 
-    let passwordCheck = await validatePassword(
+    const passwordCheck = await validatePassword(
       data.password,
       checkUser.password
     );
+    if (!passwordCheck) {
+      throw {
+        message: "Wrong Email or password",
+        statusCode: 401,
+      };
+    }
 
-    if (!passwordCheck) throw new Error("Wrong Email or password");
-
-    let token = createRefreshToken(checkUser.id);
+    const token = createRefreshToken(checkUser.id);
 
     return {
       user: checkUser,
