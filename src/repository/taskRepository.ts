@@ -14,4 +14,11 @@ export class TaskRepository {
       ? { id: createdTasks[0].insertId, success: true }
       : { success: false, id: null };
   }
+
+  async findTaskByID(id: number) {
+    return await this.db.query.tasks.findFirst({
+      where: (tasks, { eq, and, isNull }) =>
+        and(eq(tasks.id, id), isNull(tasks.deletedAt)),
+    });
+  }
 }
