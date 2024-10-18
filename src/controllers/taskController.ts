@@ -69,7 +69,7 @@ export class TaskController {
           };
       }
 
-      let updatedTask = await this.taskService.updateTaskStatus(
+      let updatedTask = await this.taskService.updateTaskStatusAdmin(
         userId,
         taskId,
         updateTaskStatusDTO

@@ -21,6 +21,10 @@ export class TaskRepository {
     return await this.db.query.tasks.findFirst({
       where: (tasks, { eq, and, isNull }) =>
         and(eq(tasks.id, id), isNull(tasks.deletedAt)),
+      with: {
+        tags: true,
+        comments: true,
+      },
     });
   }
 

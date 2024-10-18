@@ -73,6 +73,67 @@ export class TaskService {
       };
     }
 
+    if (userId !== task.userId) {
+      throw {
+        message: "You can only change the status of a task that belongs to you",
+        statusCode: 403,
+      };
+    }
+
+    if (task.status == updateTaskStatusDTO.status)
+      throw {
+        message: "You can not change the status to its current status",
+        statusCode: 422,
+      };
+
+    const editedTask = await this.taskRepository.editTaskByID(
+      taskId,
+      updateTaskStatusDTO
+    );
+
+    if (!editedTask) {
+      throw {
+        message: "Error editing task",
+        statusCode: 422,
+      };
+    }
+
+    const theTask = await this.taskRepository.findTaskByID(taskId);
+
+    if (!theTask) {
+      throw {
+        message: "Task not found",
+        statusCode: 404,
+      };
+    }
+
+    return { task: theTask };
+  }
+
+  async updateTaskStatusAdmin(
+    userId: number,
+    taskId: number,
+    updateTaskStatusDTO: UpdateTaskStatusDTO
+  ) {
+    const check = validateUpdateTaskStatus.safeParse(updateTaskStatusDTO);
+
+    if (!check.success) {
+      throw {
+        message: zodErrorObjectToStringConverter(
+          check.error.flatten().fieldErrors
+        ),
+        statusCode: 400,
+      };
+    }
+
+    const task = await this.taskRepository.findTaskByID(taskId);
+    if (!task) {
+      throw {
+        message: "Task not found",
+        statusCode: 404,
+      };
+    }
+
     if (task.status == updateTaskStatusDTO.status)
       throw {
         message: "You can not change the status to its current status",
