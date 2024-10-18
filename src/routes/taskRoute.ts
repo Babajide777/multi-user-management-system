@@ -26,5 +26,13 @@ router.patch(
     taskController.updateTaskStatus(req, res, next);
   }
 );
+router.patch(
+  "/:taskId/update-status-admin",
+  authorizeToken,
+  roleChecker(UserRoleEnum.admin),
+  (req: Request, res: Response, next: NextFunction) => {
+    taskController.updateTaskStatusAdmin(req, res, next);
+  }
+);
 
 export default router;

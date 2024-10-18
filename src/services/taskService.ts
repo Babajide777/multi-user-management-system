@@ -73,13 +73,6 @@ export class TaskService {
       };
     }
 
-    if (userId !== task.userId) {
-      throw {
-        message: "You can only change the status of a task that belongs to you",
-        statusCode: 403,
-      };
-    }
-
     if (task.status == updateTaskStatusDTO.status)
       throw {
         message: "You can not change the status to its current status",
