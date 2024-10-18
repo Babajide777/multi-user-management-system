@@ -14,4 +14,11 @@ router.post("/login", (req: Request, res: Response, next: NextFunction) => {
   authController.login(req, res, next);
 });
 
+router.post(
+  "/sign-up-admin",
+  (req: Request, res: Response, next: NextFunction) => {
+    authController.signUpAdmin(req, res, next);
+  }
+);
+
 export default router;

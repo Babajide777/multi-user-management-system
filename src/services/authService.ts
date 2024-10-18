@@ -10,6 +10,7 @@ import {
   validateLoginUser,
 } from "../dtos/userDTO";
 import { zodErrorObjectToStringConverter } from "../utils/zodErrorObjectToStringConvert";
+import { UserRoleEnum } from "../utils/enums";
 
 @Service()
 export class AuthService {
@@ -94,6 +95,54 @@ export class AuthService {
 
     return {
       user: checkUser,
+      token,
+    };
+  }
+
+  async signUpAdmin(data: CreateUserDTO) {
+    const check = validateCreateUser.safeParse(data);
+    if (!check.success) {
+      throw {
+        message: zodErrorObjectToStringConverter(
+          check.error.flatten().fieldErrors
+        ),
+        statusCode: 400,
+      };
+    }
+
+    const checkAdmin = await this.userRepository.findUserByEmail(data.email);
+    if (checkAdmin) {
+      throw {
+        message: "Admin already exists",
+        statusCode: 409,
+      };
+    }
+
+    data.password = hashPassword(data.password);
+
+    const savedAdmin = await this.userRepository.saveUser({
+      ...data,
+      role: UserRoleEnum.admin,
+    });
+    if (!savedAdmin.success || !savedAdmin.id) {
+      throw {
+        message: "Error creating admin",
+        statusCode: 500,
+      };
+    }
+
+    const token = createRefreshToken(savedAdmin.id);
+
+    const admin = await this.userRepository.findUserByID(savedAdmin.id);
+    if (!admin) {
+      throw {
+        message: "Admin not found",
+        statusCode: 500,
+      };
+    }
+
+    return {
+      admin,
       token,
     };
   }

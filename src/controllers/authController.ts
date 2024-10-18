@@ -32,4 +32,16 @@ export class AuthController {
       return fail(res, statusCode, message);
     }
   }
+
+  async signUpAdmin(req: Request, res: Response, next: NextFunction) {
+    try {
+      let request: CreateUserDTO = req.body;
+      let createdAdmin = await this.authService.signUpAdmin(request);
+      return success(res, 201, createdAdmin, "Admin created successfully");
+    } catch (error: any) {
+      const statusCode = error.statusCode || 500;
+      const message = isJSON(error.message) || "Internal Server Error";
+      return fail(res, statusCode, message);
+    }
+  }
 }
