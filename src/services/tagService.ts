@@ -3,10 +3,14 @@ import { Service } from "typedi";
 import { zodErrorObjectToStringConverter } from "../utils/zodErrorObjectToStringConvert";
 import { TagRepository } from "../repository/tagRepository";
 import { CreateTagDTO, validateCreateTag } from "../dtos/tagDTO";
+import { TaskRepository } from "../repository/taskRepository";
 
 @Service()
 export class TagService {
-  constructor(private readonly tagRepository: TagRepository) {}
+  constructor(
+    private readonly tagRepository: TagRepository,
+    private readonly taskRepository: TaskRepository
+  ) {}
 
   async createTag(userId: number, taskId: number, createTagDTO: CreateTagDTO) {
     const check = validateCreateTag.safeParse(createTagDTO);
@@ -17,6 +21,14 @@ export class TagService {
           check.error.flatten().fieldErrors
         ),
         statusCode: 400,
+      };
+    }
+
+    const task = await this.taskRepository.findTaskByID(taskId);
+    if (!task) {
+      throw {
+        message: "Task not found",
+        statusCode: 404,
       };
     }
 
